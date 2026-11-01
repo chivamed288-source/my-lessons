@@ -95,7 +95,13 @@
             {
               "id": "grh",
               "name": "Management des Ressources Humaines (GRH) et droit",
-              "lessons": []
+              "lessons": [           
+                {
+                  "title": "Chapitre 1 - Limites",
+                  "type": "cours",
+                  "file": "pdfs/L3/PARTIE 1 Introduction Generale à la GRH ISGI.pdf",
+                  "added": "2026-11-01"
+                }]
             },
             {
               "id": "risques",
@@ -115,7 +121,12 @@
             {
               "id": "durabilite",
               "name": "Durabilité et Gestion Environnementale des Procédés",
-              "lessons": []
+              "lessons": [                {
+                  "title": "Chapitre 1 - Limites",
+                  "type": "cours",
+                  "file": "pdfs/L3/Dirabilite.pdf",
+                  "added": "2026-11-01"
+                }]
             },
             {
               "id": "ordonnancement",
