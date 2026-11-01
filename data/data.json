@@ -1,0 +1,155 @@
+{
+  "levels": [
+    {
+      "id": "L1",
+      "name": "Licence 1",
+      "semesters": [
+        {
+          "id": "S1",
+          "subjects": [
+            {
+              "id": "math1",
+              "name": "Mathématiques 1",
+              "lessons": [
+                {
+                  "title": "Chapitre 1 - Limites",
+                  "type": "cours",
+                  "file": "pdfs/L1/math1-cours-ch1.pdf",
+                  "added": "2026-11-01"
+                },
+                {
+                  "title": "TD 1",
+                  "type": "td",
+                  "file": "pdfs/L1/math1-td1.pdf",
+                  "added": "2026-11-01"
+                }
+              ]
+            },
+            {
+              "id": "phys1",
+              "name": "Physique 1",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": "S2",
+          "subjects": [
+            {
+              "id": "info1",
+              "name": "Informatique 1",
+              "lessons": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L2",
+      "name": "Licence 2",
+      "semesters": [
+        {
+          "id": "S3",
+          "subjects": [
+            {
+              "id": "stat",
+              "name": "Statistiques",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": "S4",
+          "subjects": [
+            {
+              "id": "matiere-s4-1",
+              "name": "Matière S4 - 1",
+              "lessons": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "L3",
+      "name": "Licence 3",
+      "semesters": [
+        {
+          "id": "S5",
+          "subjects": [
+            {
+              "id": "anglais5",
+              "name": "Anglais 5",
+              "lessons": []
+            },
+            {
+              "id": "francais5",
+              "name": "Français 5",
+              "lessons": []
+            },
+            {
+              "id": "strategie",
+              "name": "Stratégie d'Entreprise et Veille Économique",
+              "lessons": []
+            },
+            {
+              "id": "grh",
+              "name": "Management des Ressources Humaines (GRH) et droit",
+              "lessons": []
+            },
+            {
+              "id": "risques",
+              "name": "Management des risques",
+              "lessons": []
+            },
+            {
+              "id": "logistique",
+              "name": "Management des chaînes logistiques",
+              "lessons": []
+            },
+            {
+              "id": "simulation",
+              "name": "Simulation des Processus",
+              "lessons": []
+            },
+            {
+              "id": "durabilite",
+              "name": "Durabilité et Gestion Environnementale des Procédés",
+              "lessons": []
+            },
+            {
+              "id": "ordonnancement",
+              "name": "Ordonnancement",
+              "lessons": []
+            },
+            {
+              "id": "qhse",
+              "name": "Système de Management intégré QHSE",
+              "lessons": []
+            },
+            {
+              "id": "industrie40",
+              "name": "Industrie 4.0",
+              "lessons": []
+            },
+            {
+              "id": "stage",
+              "name": "Stage L2",
+              "lessons": []
+            }
+          ]
+        },
+        {
+          "id": "S6",
+          "subjects": [
+            {
+              "id": "pfe",
+              "name": "Projet de Fin d'Études (16 semaines)",
+              "lessons": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

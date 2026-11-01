@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#16233b">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Cours - My Lessons</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <a id="back" class="back" href="index.html">Retour</a>
+    <h1 id="title"></h1>
+    <div id="content"></div>
+  </main>
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const lid = params.get("l"), sid = params.get("s"), mid = params.get("m");
+      document.getElementById("back").href = "niveau.html?l=" + lid;
+      document.getElementById("back").textContent = "Retour aux matières " + (lid || "");
+      try {
+        const data = await loadData();
+        const level = data.levels.find(l => l.id === lid);
+        const sem = level && level.semesters.find(s => s.id === sid);
+        const sub = sem && sem.subjects.find(m => m.id === mid);
+        if (!sub) return showError("Matière introuvable. Retourne à l'accueil.");
+        document.getElementById("title").textContent = sub.name;
+        document.title = sub.name + " - My Lessons";
+
+        const content = document.getElementById("content");
+        if (!sub.lessons.length) {
+          content.append(el("p", { class: "empty" }, "Aucun fichier pour cette matière. Demande au chef de classe de les ajouter."));
+          return;
+        }
+        TYPES.forEach(([key, label]) => {
+          const items = sub.lessons.filter(l => l.type === key);
+          if (!items.length) return;
+          content.append(el("h2", {}, label));
+          const ul = el("ul", { class: "list" });
+          items.forEach(ls => {
+            const title = el("span", {}, ls.title);
+            if (isNew(ls.added)) title.append(el("span", { class: "new" }, "Nouveau"));
+            const open = el("a", { class: "btn", href: ls.file, target: "_blank", rel: "noopener" }, "Ouvrir");
+            const dl = el("a", { class: "btn", href: ls.file, download: "" }, "Télécharger");
+            ul.append(el("li", { class: "row" }, title, el("span", { class: "actions" }, open, dl)));
+          });
+          content.append(ul);
+        });
+      } catch (e) { showError("Erreur de chargement. Vérifie ta connexion et réessaie."); }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#16233b">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>Matières - My Lessons</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="index.html">Changer de niveau</a>
+    <h1 id="title"></h1>
+    <input id="q" class="search" type="search" placeholder="Chercher un cours ou une matière" aria-label="Recherche">
+    <div id="results"></div>
+    <div id="content"></div>
+  </main>
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const lid = params.get("l");
+      try {
+        const data = await loadData();
+        const level = data.levels.find(l => l.id === lid);
+        if (!level) return showError("Niveau introuvable. Retourne à l'accueil.");
+        document.getElementById("title").textContent = level.name;
+        document.title = level.name + " - My Lessons";
+
+        const content = document.getElementById("content");
+        level.semesters.forEach(sem => {
+          content.append(el("h2", {}, "Semestre " + sem.id.replace("S", "")));
+          if (!sem.subjects.length) {
+            content.append(el("p", { class: "empty" }, "Aucune matière pour le moment."));
+            return;
+          }
+          const ul = el("ul", { class: "list" });
+          sem.subjects.forEach(sub => {
+            const n = sub.lessons.length;
+            const a = el("a", { class: "row", href: `matiere.html?l=${level.id}&s=${sem.id}&m=${sub.id}` },
+              el("span", {}, sub.name),
+              el("span", { class: "count" }, n + (n > 1 ? " fichiers" : " fichier")));
+            ul.append(el("li", {}, a));
+          });
+          content.append(ul);
+        });
+
+        // Recherche dans tout le niveau
+        const q = document.getElementById("q");
+        const results = document.getElementById("results");
+        q.addEventListener("input", () => {
+          const term = q.value.trim().toLowerCase();
+          results.replaceChildren();
+          content.hidden = term.length > 0;
+          if (!term) return;
+          const found = [];
+          level.semesters.forEach(sem => sem.subjects.forEach(sub => {
+            if (sub.name.toLowerCase().includes(term)) found.push({ sem, sub, lesson: null });
+            sub.lessons.forEach(ls => {
+              if (ls.title.toLowerCase().includes(term)) found.push({ sem, sub, lesson: ls });
+            });
+          }));
+          if (!found.length) {
+            results.append(el("p", { class: "empty" }, "Aucun résultat pour « " + q.value + " »."));
+            return;
+          }
+          const ul = el("ul", { class: "list" });
+          found.forEach(f => {
+            const href = f.lesson ? f.lesson.file : `matiere.html?l=${level.id}&s=${f.sem.id}&m=${f.sub.id}`;
+            const a = el("a", { class: "row", href },
+              el("span", {}, f.lesson ? f.lesson.title : f.sub.name,
+                el("small", {}, f.lesson ? f.sub.name : "Matière")));
+            if (f.lesson) a.target = "_blank";
+            ul.append(el("li", {}, a));
+          });
+          results.append(ul);
+        });
+      } catch (e) { showError("Erreur de chargement. Vérifie ta connexion et réessaie."); }
+    })();
+  </script>
+</body>
+</html>

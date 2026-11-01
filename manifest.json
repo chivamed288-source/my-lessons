@@ -1,0 +1,15 @@
+{
+  "name": "My Lessons",
+  "short_name": "My Lessons",
+  "description": "Tous les cours, TD, TP et examens au même endroit.",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#eef3f8",
+  "theme_color": "#16233b",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
