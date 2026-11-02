@@ -1,5 +1,5 @@
 // Change ce numéro à chaque mise à jour du site pour forcer le rafraîchissement
-const VERSION = "v7";
+const VERSION = "v8";
 const SHELL = `ml-shell-${VERSION}`;
 const PDFS = "ml-pdfs";
 const FILES = [
@@ -9,7 +9,7 @@ const FILES = [
 ];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES)));
+  e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES.map(f => new Request(f, { cache: "reload" })))));
   self.skipWaiting();
 });
 
@@ -52,18 +52,15 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // Liste des cours : réseau d'abord (pour voir les nouveautés), cache si hors ligne
-  if (url.pathname.endsWith("data.json")) {
-    e.respondWith(
-      fetch(req).then(res => {
+  // Pages, scripts, styles, données : réseau d'abord (toujours la dernière version),
+  // cache seulement si pas de connexion
+  e.respondWith(
+    fetch(req).then(res => {
+      if (res.ok) {
         const copy = res.clone();
         caches.open(SHELL).then(c => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req))
-    );
-    return;
-  }
-
-  // Reste du site : cache d'abord
-  e.respondWith(caches.match(req).then(hit => hit || fetch(req)));
+      }
+      return res;
+    }).catch(() => caches.match(req, { ignoreSearch: true }))
+  );
 });
