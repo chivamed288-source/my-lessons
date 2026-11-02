@@ -1,5 +1,5 @@
 // Change ce numéro à chaque mise à jour du site pour forcer le rafraîchissement
-const VERSION = "v6";
+const VERSION = "v7";
 const SHELL = `ml-shell-${VERSION}`;
 const PDFS = "ml-pdfs";
 const FILES = [
