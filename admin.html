@@ -138,7 +138,7 @@
         e.preventDefault();
         setMsg("Connexion...");
         const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
-        if (error) return setMsg("Email ou mot de passe incorrect.", true);
+        if (error) return setMsg(error.message === "Invalid login credentials" ? "Email ou mot de passe incorrect." : "Erreur : " + error.message, true);
         $("password").value = "";
         showPanel();
       });
