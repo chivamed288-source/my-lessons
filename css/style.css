@@ -6,6 +6,7 @@
   --marker: #ffe45c;
   --hl: #ffe45c;
   --card: #ffffff;
+  --a1: #ffb703; --a2: #4cc9f0; --a3: #80ed99; --a4: #f78fb3; --a5: #b8a1ff;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -131,3 +132,41 @@ button.btn { cursor:pointer; font:inherit; font-weight:600; }
 .status { min-height:1.5em; font-weight:600; }
 .status.bad { color:#e0453a; }
 footer a { color:inherit; }
+
+/* ---------- Amélioration du style ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.wrap { animation: rise .35s ease both; }
+.list li { animation: rise .35s ease both; }
+.list li:nth-child(2) { animation-delay: .04s; } .list li:nth-child(3) { animation-delay: .08s; }
+.list li:nth-child(4) { animation-delay: .12s; } .list li:nth-child(n+5) { animation-delay: .16s; }
+
+/* Niveaux : pastille colorée */
+.level b {
+  display: grid; place-items: center; min-width: 3.4rem; height: 3.4rem; padding: 0 .4rem;
+  border: 2px solid var(--ink); border-radius: 8px; color: #16233b; font-size: 1.5rem;
+}
+.levels .level:nth-child(1) b { background: var(--a2); }
+.levels .level:nth-child(2) b { background: var(--a3); }
+.levels .level:nth-child(3) b { background: var(--a5); }
+
+/* Matières : bande de couleur à gauche */
+.subject { border-left-width: 10px; }
+.list li:nth-child(5n+1) .subject { border-left-color: var(--a1); }
+.list li:nth-child(5n+2) .subject { border-left-color: var(--a2); }
+.list li:nth-child(5n+3) .subject { border-left-color: var(--a3); }
+.list li:nth-child(5n+4) .subject { border-left-color: var(--a4); }
+.list li:nth-child(5n+5) .subject { border-left-color: var(--a5); }
+
+.tag { font-size: .75rem; font-weight: 700; padding: 3px 8px; border: 2px solid var(--ink); border-radius: 999px; white-space: nowrap; }
+a.row:hover .tag { border-color: #16233b; }
+h2 { display: inline-block; background: linear-gradient(transparent 60%, var(--hl) 60%); }
+
+/* Fichiers : boutons pleine largeur sur petit écran */
+@media (max-width: 440px) {
+  li.row { flex-wrap: wrap; }
+  li.row .actions { width: 100%; }
+  li.row .actions .btn { flex: 1; text-align: center; padding: 11px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wrap, .list li { animation: none; }
+}

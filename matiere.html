@@ -45,7 +45,7 @@
           items.forEach(ls => {
             const title = el("span", {}, ls.title);
             if (isNew(ls.added)) title.append(el("span", { class: "new" }, "Nouveau"));
-            const open = el("a", { class: "btn", href: ls.file, target: "_blank", rel: "noopener" }, "Ouvrir");
+            const open = el("a", { class: "btn primary", href: ls.file, target: "_blank", rel: "noopener" }, "Ouvrir");
             const dl = ls.remote
               ? el("a", { class: "btn", href: ls.file + "?download=" + encodeURIComponent(ls.title + ".pdf") }, "Télécharger")
               : el("a", { class: "btn", href: ls.file, download: "" }, "Télécharger");
