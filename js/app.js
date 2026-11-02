@@ -1,10 +1,34 @@
 // Fonctions partagées par toutes les pages
 const params = new URLSearchParams(location.search);
 
+// Fichiers ajoutés par les chefs de classe (Supabase). Silencieux si pas configuré ou hors ligne.
+async function fetchRemoteLessons() {
+  const c = window.ML_CONFIG || {};
+  if (!c.SUPABASE_URL || !c.SUPABASE_ANON_KEY) return [];
+  try {
+    const res = await fetch(
+      c.SUPABASE_URL + "/rest/v1/lessons?select=level,semester,subject,type,title,file_url,created_at&order=created_at.desc&limit=1000",
+      { headers: { apikey: c.SUPABASE_ANON_KEY } }
+    );
+    return res.ok ? await res.json() : [];
+  } catch (e) { return []; }
+}
+
 async function loadData() {
   const res = await fetch("data/data.json");
   if (!res.ok) throw new Error("Impossible de charger les cours");
-  return res.json();
+  const data = await res.json();
+  const remote = await fetchRemoteLessons();
+  remote.forEach(r => {
+    const level = data.levels.find(l => l.id === r.level);
+    const sem = level && level.semesters.find(s => s.id === r.semester);
+    const sub = sem && sem.subjects.find(m => m.id === r.subject);
+    if (sub) sub.lessons.push({
+      title: r.title, type: r.type, file: r.file_url,
+      added: (r.created_at || "").slice(0, 10), remote: true
+    });
+  });
+  return data;
 }
 
 function el(tag, attrs = {}, ...children) {

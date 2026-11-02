@@ -9,13 +9,22 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="css/style.css">
   <script src="js/theme.js"></script>
+  <script>
+    // Niveau déjà choisi : on saute cette page (sauf si l'élève veut changer : ?choose=1)
+    (function () {
+      try {
+        var l = localStorage.getItem("ml_level");
+        if (l && !new URLSearchParams(location.search).has("choose")) {
+          location.replace("niveau.html?l=" + encodeURIComponent(l));
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <main class="wrap">
     <h1>Tous tes cours, <span>au même endroit.</span></h1>
-    <p class="lead">Choisis ton niveau pour retrouver les cours, TD, TP et examens de chaque matière.</p>
-
-    <a id="resume" class="resume" href="#"></a>
+    <p class="lead">Choisis ton niveau pour retrouver les cours, TD, TP et examens de chaque matière. Tu ne le feras qu'une seule fois.</p>
 
     <nav class="levels" aria-label="Choix du niveau">
       <a class="level" href="niveau.html?l=L1" data-level="L1"><b>L1</b><span>Licence 1<small>Semestres 1 et 2</small></span></a>
@@ -27,20 +36,12 @@
   </main>
 
   <script>
-    // Se souvenir du dernier niveau choisi
-    const KEY = "ml_level";
-    try {
-      document.querySelectorAll(".level").forEach(a =>
-        a.addEventListener("click", () => localStorage.setItem(KEY, a.dataset.level)));
-      const last = localStorage.getItem(KEY);
-      if (last) {
-        const r = document.getElementById("resume");
-        r.href = "niveau.html?l=" + last;
-        r.textContent = "Continuer avec " + last;
-        r.classList.add("show");
-      }
-    } catch (e) { /* stockage indisponible : on ignore */ }
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+    document.querySelectorAll(".level").forEach(function (a) {
+      a.addEventListener("click", function () {
+        try { localStorage.setItem("ml_level", a.dataset.level); } catch (e) {}
+      });
+    });
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
   </script>
 </body>
 </html>

@@ -16,6 +16,7 @@
     <h1 id="title"></h1>
     <div id="content"></div>
   </main>
+  <script src="js/config.js"></script>
   <script src="js/app.js"></script>
   <script>
     (async () => {
@@ -45,7 +46,9 @@
             const title = el("span", {}, ls.title);
             if (isNew(ls.added)) title.append(el("span", { class: "new" }, "Nouveau"));
             const open = el("a", { class: "btn", href: ls.file, target: "_blank", rel: "noopener" }, "Ouvrir");
-            const dl = el("a", { class: "btn", href: ls.file, download: "" }, "Télécharger");
+            const dl = ls.remote
+              ? el("a", { class: "btn", href: ls.file + "?download=" + encodeURIComponent(ls.title + ".pdf") }, "Télécharger")
+              : el("a", { class: "btn", href: ls.file, download: "" }, "Télécharger");
             ul.append(el("li", { class: "row" }, title, el("span", { class: "actions" }, open, dl)));
           });
           content.append(ul);

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#16233b">
+  <title>Espace chef de classe - My Lessons</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="index.html">Retour au site</a>
+    <h1>Espace <span>chef de classe</span></h1>
+    <p id="msg" class="status" role="status"></p>
+
+    <form id="login" hidden>
+      <div class="field"><label for="email">Email</label>
+        <input id="email" class="search" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="password">Mot de passe</label>
+        <input id="password" class="search" type="password" autocomplete="current-password" required></div>
+      <button class="btn primary" type="submit">Se connecter</button>
+    </form>
+
+    <section id="panel" hidden>
+      <form id="upload">
+        <div class="field" id="levelField"><label for="level">Niveau</label><select id="level" class="search"></select></div>
+        <div class="field"><label for="semester">Semestre</label><select id="semester" class="search"></select></div>
+        <div class="field"><label for="subject">Matière</label><select id="subject" class="search"></select></div>
+        <div class="field"><label for="type">Type</label>
+          <select id="type" class="search">
+            <option value="cours">Cours</option><option value="td">TD</option>
+            <option value="tp">TP</option><option value="examen">Examen</option>
+          </select></div>
+        <div class="field"><label for="title">Titre (facultatif)</label>
+          <input id="title" class="search" type="text" placeholder="Ex : Chapitre 2 - Ordonnancement"></div>
+        <div class="field"><label for="file">Fichier PDF (50 Mo max)</label>
+          <input id="file" class="search" type="file" accept="application/pdf,.pdf"></div>
+        <button id="send" class="btn primary" type="submit">Ajouter le fichier</button>
+      </form>
+
+      <h2>Mes fichiers</h2>
+      <div id="mine"></div>
+      <p><button id="logout" class="btn" type="button">Se déconnecter</button></p>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const $ = id => document.getElementById(id);
+      const cfg = window.ML_CONFIG || {};
+      function setMsg(t, bad) { $("msg").textContent = t || ""; $("msg").className = "status" + (bad ? " bad" : ""); }
+
+      if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY || !window.supabase) {
+        return setMsg("L'espace chef de classe n'est pas encore configuré (js/config.js).", true);
+      }
+      const sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+      let structure, levels = [];
+
+      function fill(select, items, emptyLabel) {
+        select.replaceChildren();
+        if (!items.length) { select.append(el("option", { value: "" }, emptyLabel)); return; }
+        items.forEach(([v, t]) => select.append(el("option", { value: v }, t)));
+      }
+      const lvl = () => structure.levels.find(l => l.id === $("level").value);
+      const sem = () => lvl() && lvl().semesters.find(s => s.id === $("semester").value);
+
+      function fillSemesters() {
+        fill($("semester"), (lvl() ? lvl().semesters : []).map(s => [s.id, "Semestre " + s.id.replace("S", "")]), "Aucun semestre");
+        fillSubjects();
+      }
+      function fillSubjects() {
+        fill($("subject"), (sem() ? sem().subjects : []).map(m => [m.id, m.name]), "Aucune matière");
+      }
+      function subjectName(l, s, m) {
+        const L = structure.levels.find(x => x.id === l), S = L && L.semesters.find(x => x.id === s);
+        const M = S && S.subjects.find(x => x.id === m);
+        return M ? M.name : m;
+      }
+
+      async function showLogin() {
+        $("panel").hidden = true; $("login").hidden = false; setMsg("Connecte-toi avec le compte donné par l'administrateur.");
+      }
+
+      async function showPanel() {
+        $("login").hidden = true;
+        const { data, error } = await sb.from("admins").select("level");
+        if (error || !data || !data.length) {
+          $("panel").hidden = false; $("upload").hidden = true;
+          setMsg("Ton compte n'a pas encore de niveau assigné. Contacte l'administrateur.", true);
+          return loadMine();
+        }
+        levels = data.map(d => d.level).sort();
+        structure = await loadData();
+        fill($("level"), levels.map(l => [l, l]));
+        $("levelField").hidden = levels.length === 1;
+        fillSemesters();
+        $("upload").hidden = false; $("panel").hidden = false;
+        setMsg("");
+        loadMine();
+      }
+
+      async function loadMine() {
+        const box = $("mine");
+        box.replaceChildren();
+        if (!levels.length) return;
+        const { data, error } = await sb.from("lessons")
+          .select("id,level,semester,subject,type,title,file_path,created_at")
+          .in("level", levels).order("created_at", { ascending: false }).limit(100);
+        if (error) return box.append(el("p", { class: "empty" }, "Impossible de charger la liste."));
+        if (!data.length) return box.append(el("p", { class: "empty" }, "Aucun fichier ajouté pour le moment."));
+        const ul = el("ul", { class: "list" });
+        data.forEach(r => {
+          const del = el("button", { class: "btn danger", type: "button" }, "Supprimer");
+          del.addEventListener("click", async () => {
+            if (!confirm("Supprimer « " + r.title + " » ?")) return;
+            const d = await sb.from("lessons").delete().eq("id", r.id);
+            if (d.error) return setMsg("Suppression impossible.", true);
+            await sb.storage.from("pdfs").remove([r.file_path]);
+            setMsg("Fichier supprimé.");
+            loadMine();
+          });
+          ul.append(el("li", { class: "row" },
+            el("span", {}, r.title, el("small", {}, r.level + " · " + r.semester + " · " + subjectName(r.level, r.semester, r.subject) + " · " + r.type)),
+            del));
+        });
+        box.append(ul);
+      }
+
+      $("level").addEventListener("change", fillSemesters);
+      $("semester").addEventListener("change", fillSubjects);
+
+      $("login").addEventListener("submit", async e => {
+        e.preventDefault();
+        setMsg("Connexion...");
+        const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+        if (error) return setMsg("Email ou mot de passe incorrect.", true);
+        $("password").value = "";
+        showPanel();
+      });
+
+      $("logout").addEventListener("click", async () => { await sb.auth.signOut(); levels = []; showLogin(); });
+
+      $("upload").addEventListener("submit", async e => {
+        e.preventDefault();
+        const f = $("file").files[0];
+        const level = $("level").value, semester = $("semester").value, subject = $("subject").value, type = $("type").value;
+        if (!subject) return setMsg("Choisis une matière.", true);
+        if (!f) return setMsg("Choisis un fichier PDF.", true);
+        if (!/\.pdf$/i.test(f.name)) return setMsg("Le fichier doit être un PDF.", true);
+        if (f.size > 50 * 1024 * 1024) return setMsg("Fichier trop gros (50 Mo maximum).", true);
+
+        const base = f.name.replace(/\.pdf$/i, "");
+        const title = $("title").value.trim() || base;
+        const slug = base.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "fichier";
+        const path = level + "/" + subject + "/" + Date.now() + "-" + slug + ".pdf";
+
+        $("send").disabled = true; setMsg("Envoi en cours...");
+        const up = await sb.storage.from("pdfs").upload(path, f, { contentType: "application/pdf" });
+        if (up.error) { $("send").disabled = false; return setMsg("Envoi impossible : " + up.error.message, true); }
+        const url = sb.storage.from("pdfs").getPublicUrl(path).data.publicUrl;
+        const ins = await sb.from("lessons").insert({ level, semester, subject, type, title, file_url: url, file_path: path });
+        $("send").disabled = false;
+        if (ins.error) {
+          await sb.storage.from("pdfs").remove([path]);
+          return setMsg("Enregistrement impossible : " + ins.error.message, true);
+        }
+        $("title").value = ""; $("file").value = "";
+        setMsg("Fichier ajouté. Il est visible sur le site.");
+        loadMine();
+      });
+
+      const { data: { session } } = await sb.auth.getSession();
+      session ? showPanel() : showLogin();
+    })();
+  </script>
+</body>
+</html>

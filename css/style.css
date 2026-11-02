@@ -120,3 +120,14 @@ a.row:hover small { color:#16233b; }
 }
 .theme-btn:hover { background: var(--marker); color: #16233b; }
 .theme-btn:focus-visible { outline: 3px solid var(--marker); outline-offset: 3px; }
+
+/* ---------- Formulaires / admin ---------- */
+.field { display:grid; gap:6px; margin-bottom:14px; }
+.field label { font-weight:600; }
+.field .search { margin-bottom:0; }
+button.btn { cursor:pointer; font:inherit; font-weight:600; }
+.btn.primary { background:var(--marker); color:#16233b; }
+.btn.danger { border-color:#e0453a; color:#e0453a; }
+.status { min-height:1.5em; font-weight:600; }
+.status.bad { color:#e0453a; }
+footer a { color:inherit; }

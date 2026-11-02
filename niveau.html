@@ -12,12 +12,14 @@
 </head>
 <body>
   <main class="wrap">
-    <a class="back" href="index.html">Changer de niveau</a>
+    <a class="back" href="index.html?choose=1">Changer de niveau</a>
     <h1 id="title"></h1>
     <input id="q" class="search" type="search" placeholder="Chercher un cours ou une matière" aria-label="Recherche">
     <div id="results"></div>
     <div id="content"></div>
+    <footer><a href="admin.html">Espace chef de classe</a></footer>
   </main>
+  <script src="js/config.js"></script>
   <script src="js/app.js"></script>
   <script>
     (async () => {
@@ -25,7 +27,8 @@
       try {
         const data = await loadData();
         const level = data.levels.find(l => l.id === lid);
-        if (!level) return showError("Niveau introuvable. Retourne à l'accueil.");
+        if (!level) { try { localStorage.removeItem("ml_level"); } catch (e) {} return showError("Niveau introuvable. Utilise « Changer de niveau »."); }
+        try { localStorage.setItem("ml_level", level.id); } catch (e) {}
         document.getElementById("title").textContent = level.name;
         document.title = level.name + " - My Lessons";
 
