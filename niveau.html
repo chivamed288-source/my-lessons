@@ -39,13 +39,13 @@
         const recent = document.getElementById("recent");
         const all = [];
         level.semesters.forEach(sem => sem.subjects.forEach(sub => sub.lessons.forEach(ls => {
-          if (ls.added) all.push({ sub, ls });
+          if (isNew(ls.added)) all.push({ sub, ls });
         })));
         all.sort((a, b) => b.ls.added.localeCompare(a.ls.added));
         if (all.length) {
-          recent.append(el("h2", {}, "Récemment ajoutés"));
+          recent.append(el("h2", {}, "Ajoutés aujourd'hui"));
           const ulr = el("ul", { class: "list" });
-          all.slice(0, 4).forEach(({ sub, ls }) => {
+          all.slice(0, 6).forEach(({ sub, ls }) => {
             const label = (TYPES.find(t => t[0] === ls.type) || [0, ls.type])[1];
             ulr.append(el("li", {}, el("a", { class: "row", href: ls.file, target: "_blank", rel: "noopener" },
               el("span", {}, ls.title, el("small", {}, sub.name)),

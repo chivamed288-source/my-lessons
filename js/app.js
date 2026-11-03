@@ -25,7 +25,7 @@ async function loadData() {
     const sub = sem && sem.subjects.find(m => m.id === r.subject);
     if (sub) sub.lessons.push({
       title: r.title, type: r.type, file: r.file_url,
-      added: (r.created_at || "").slice(0, 10), remote: true
+      added: r.created_at || "", remote: true
     });
   });
   return data;
@@ -48,9 +48,11 @@ const TYPES = [
   ["examen", "Examens"]
 ];
 
+// Un fichier est "Nouveau" pendant ce nombre de jours (change ce chiffre si besoin)
+const NEW_DAYS = 1;
 function isNew(dateStr) {
   if (!dateStr) return false;
-  return (Date.now() - new Date(dateStr).getTime()) < 14 * 24 * 3600 * 1000;
+  return (Date.now() - new Date(dateStr).getTime()) < NEW_DAYS * 24 * 3600 * 1000;
 }
 
 function showError(msg) {

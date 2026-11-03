@@ -8,26 +8,53 @@
           "id": "S1",
           "subjects": [
             {
-              "id": "math1",
-              "name": "Mathématiques 1",
-              "lessons": [
-                {
-                  "title": "Chapitre 1 - Limites",
-                  "type": "cours",
-                  "file": "pdfs/L1/math1-cours-ch1.pdf",
-                  "added": "2026-11-01"
-                },
-                {
-                  "title": "TD 1",
-                  "type": "td",
-                  "file": "pdfs/L1/math1-td1.pdf",
-                  "added": "2026-11-01"
-                }
-              ]
+              "id": "anglais1",
+              "name": "Anglais 1",
+              "lessons": []
             },
             {
-              "id": "phys1",
-              "name": "Physique 1",
+              "id": "francais1",
+              "name": "Français 1",
+              "lessons": []
+            },
+            {
+              "id": "analyse1",
+              "name": "Analyse 1",
+              "lessons": []
+            },
+            {
+              "id": "algebre1",
+              "name": "Algèbre 1",
+              "lessons": []
+            },
+            {
+              "id": "informatique",
+              "name": "Informatique",
+              "lessons": []
+            },
+            {
+              "id": "algo-c",
+              "name": "Algorithmique et programmation en C/C++",
+              "lessons": []
+            },
+            {
+              "id": "circuit-elec",
+              "name": "Circuit électrique",
+              "lessons": []
+            },
+            {
+              "id": "circuit-electro",
+              "name": "Circuit électronique",
+              "lessons": []
+            },
+            {
+              "id": "meca-dessin",
+              "name": "Mécanique générale et dessin industriel",
+              "lessons": []
+            },
+            {
+              "id": "intro-gi",
+              "name": "Introduction au génie industriel",
               "lessons": []
             }
           ]
@@ -36,8 +63,53 @@
           "id": "S2",
           "subjects": [
             {
-              "id": "info1",
-              "name": "Informatique 1",
+              "id": "anglais2",
+              "name": "Anglais 2",
+              "lessons": []
+            },
+            {
+              "id": "francais2",
+              "name": "Français 2",
+              "lessons": []
+            },
+            {
+              "id": "statistique",
+              "name": "Statistique",
+              "lessons": []
+            },
+            {
+              "id": "probabilite",
+              "name": "Probabilité",
+              "lessons": []
+            },
+            {
+              "id": "bdd",
+              "name": "Base de données",
+              "lessons": []
+            },
+            {
+              "id": "python",
+              "name": "Programmation Python",
+              "lessons": []
+            },
+            {
+              "id": "conversion-energie",
+              "name": "Système de conversion de l'énergie",
+              "lessons": []
+            },
+            {
+              "id": "mesure-instrumentation",
+              "name": "Mesure et instrumentation",
+              "lessons": []
+            },
+            {
+              "id": "qualite",
+              "name": "Gestion de qualité",
+              "lessons": []
+            },
+            {
+              "id": "meca-materiaux",
+              "name": "Mécanique des matériaux",
               "lessons": []
             }
           ]
@@ -95,13 +167,7 @@
             {
               "id": "grh",
               "name": "Management des Ressources Humaines (GRH) et droit",
-              "lessons": [           
-                {
-                  "title": "Chapitre 1 - Limites",
-                  "type": "cours",
-                  "file": "pdfs/L3/PARTIE 1 Introduction Generale à la GRH ISGI.pdf",
-                  "added": "2026-11-01"
-                }]
+              "lessons": []
             },
             {
               "id": "risques",
@@ -121,12 +187,7 @@
             {
               "id": "durabilite",
               "name": "Durabilité et Gestion Environnementale des Procédés",
-              "lessons": [                {
-                  "title": "Chapitre 1 - Limites",
-                  "type": "cours",
-                  "file": "pdfs/L3/Dirabilite.pdf",
-                  "added": "2026-11-01"
-                }]
+              "lessons": []
             },
             {
               "id": "ordonnancement",
