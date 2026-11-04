@@ -182,3 +182,8 @@ footer a { color: inherit; }
   .wrap, .list li { animation: none; }
   .level, .row, .btn { transition: none; }
 }
+
+/* ----- Hors ligne ----- */
+.offline-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 4px 0 8px; }
+.hint { color: var(--muted); font-size: .85rem; }
+.btn[data-saved="1"] { color: var(--good); border-color: var(--good); }

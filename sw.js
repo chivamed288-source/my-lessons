@@ -1,5 +1,5 @@
 // Change ce numéro à chaque mise à jour du site pour forcer le rafraîchissement
-const VERSION = "v9";
+const VERSION = "v8";
 const SHELL = `ml-shell-${VERSION}`;
 const PDFS = "ml-pdfs";
 const FILES = [
@@ -37,6 +37,29 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (url.origin !== location.origin) return;
+
+  // Ouverture d'un PDF (local ou Supabase) : cache d'abord, puis réseau, et on garde une copie
+  if (url.pathname.endsWith("/open-pdf")) {
+    let t;
+    try { t = new URL(url.searchParams.get("u") || ""); } catch (err) { return; }
+    const okLocal = t.origin === location.origin && t.pathname.endsWith(".pdf");
+    const okRemote = t.hostname.endsWith(".supabase.co") && t.pathname.includes("/storage/v1/object/public/pdfs/");
+    if (!okLocal && !okRemote) return;
+    e.respondWith(
+      caches.open(PDFS).then(async cache => {
+        const hit = await cache.match(t.href);
+        if (hit) return hit;
+        try {
+          const res = await fetch(t.href, { mode: "cors" });
+          if (res.ok) cache.put(t.href, res.clone());
+          return res;
+        } catch (err) {
+          return Response.redirect(t.href, 302);
+        }
+      })
+    );
+    return;
+  }
 
   // PDF : on garde en cache après la première ouverture (utilisable hors ligne)
   if (url.pathname.endsWith(".pdf")) {

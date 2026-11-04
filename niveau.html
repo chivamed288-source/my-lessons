@@ -47,7 +47,7 @@
           const ulr = el("ul", { class: "list" });
           all.slice(0, 6).forEach(({ sub, ls }) => {
             const label = (TYPES.find(t => t[0] === ls.type) || [0, ls.type])[1];
-            ulr.append(el("li", {}, el("a", { class: "row", href: ls.file, target: "_blank", rel: "noopener" },
+            ulr.append(el("li", {}, el("a", { class: "row", href: pdfHref(ls.file), target: "_blank", rel: "noopener" },
               el("span", {}, ls.title, el("small", {}, sub.name)),
               el("span", { class: "tag" }, label))));
           });
@@ -92,7 +92,7 @@
           }
           const ul = el("ul", { class: "list" });
           found.forEach(f => {
-            const href = f.lesson ? f.lesson.file : `matiere.html?l=${level.id}&s=${f.sem.id}&m=${f.sub.id}`;
+            const href = f.lesson ? pdfHref(f.lesson.file) : `matiere.html?l=${level.id}&s=${f.sem.id}&m=${f.sub.id}`;
             const a = el("a", { class: "row", href },
               el("span", {}, f.lesson ? f.lesson.title : f.sub.name,
                 el("small", {}, f.lesson ? f.sub.name : "Matière")));

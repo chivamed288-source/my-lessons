@@ -59,6 +59,43 @@ function showError(msg) {
   document.querySelector("main").append(el("p", { class: "empty" }, msg));
 }
 
+// ---------- Fichiers hors ligne ----------
+const PDF_CACHE = "ml-pdfs";
+const absUrl = file => new URL(file, location.href).href;
+
+// Les PDF passent par le service worker (open-pdf) pour pouvoir s'ouvrir sans internet
+function pdfHref(file) {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return file;
+  return "open-pdf?u=" + encodeURIComponent(absUrl(file));
+}
+async function isSaved(file) {
+  try { return !!(await (await caches.open(PDF_CACHE)).match(absUrl(file))); }
+  catch (e) { return false; }
+}
+async function savePdf(file) {
+  const cache = await caches.open(PDF_CACHE);
+  const res = await fetch(absUrl(file), { mode: "cors" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  await cache.put(absUrl(file), res);
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+}
+async function removePdf(file) {
+  try { await (await caches.open(PDF_CACHE)).delete(absUrl(file)); } catch (e) {}
+}
+
+// Bandeau "hors ligne"
+function offlineNote() {
+  const main = document.querySelector("main");
+  if (!main) return;
+  let n = document.getElementById("offnote");
+  if (!navigator.onLine) {
+    if (!n) main.prepend(el("p", { id: "offnote", class: "empty" }, "Mode hors ligne : seuls les fichiers enregistrés peuvent s'ouvrir."));
+  } else if (n) n.remove();
+}
+window.addEventListener("online", offlineNote);
+window.addEventListener("offline", offlineNote);
+document.addEventListener("DOMContentLoaded", offlineNote);
+
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }

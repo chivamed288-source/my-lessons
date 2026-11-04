@@ -14,6 +14,7 @@
   <main class="wrap">
     <a id="back" class="back" href="index.html">Retour</a>
     <h1 id="title"></h1>
+    <div id="bar"></div>
     <div id="content"></div>
   </main>
   <script src="js/config.js"></script>
@@ -22,7 +23,7 @@
     (async () => {
       const lid = params.get("l"), sid = params.get("s"), mid = params.get("m");
       document.getElementById("back").href = "niveau.html?l=" + lid;
-      document.getElementById("back").textContent = "Retour aux matières " + (lid || "");
+      document.getElementById("back").textContent = "Matières " + (lid || "");
       try {
         const data = await loadData();
         const level = data.levels.find(l => l.id === lid);
@@ -37,6 +38,14 @@
           content.append(el("p", { class: "empty" }, "Aucun fichier pour cette matière. Demande au chef de classe de les ajouter."));
           return;
         }
+
+        const rows = []; // { ls, open, off }
+        function setSaved(r, saved) {
+          r.off.dataset.saved = saved ? "1" : "0";
+          r.open.dataset.saved = saved ? "1" : "0";
+          r.off.textContent = saved ? "✓ Hors ligne" : "Hors ligne";
+        }
+
         TYPES.forEach(([key, label]) => {
           const items = sub.lessons.filter(l => l.type === key);
           if (!items.length) return;
@@ -45,14 +54,51 @@
           items.forEach(ls => {
             const title = el("span", {}, ls.title);
             if (isNew(ls.added)) title.append(el("span", { class: "new" }, "Nouveau"));
-            const open = el("a", { class: "btn primary", href: ls.file, target: "_blank", rel: "noopener" }, "Ouvrir");
+            const open = el("a", { class: "btn primary", href: pdfHref(ls.file), target: "_blank", rel: "noopener" }, "Ouvrir");
             const dl = ls.remote
               ? el("a", { class: "btn", href: ls.file + "?download=" + encodeURIComponent(ls.title + ".pdf") }, "Télécharger")
               : el("a", { class: "btn", href: ls.file, download: "" }, "Télécharger");
-            ul.append(el("li", { class: "row" }, title, el("span", { class: "actions" }, open, dl)));
+            const off = el("button", { class: "btn", type: "button" }, "Hors ligne");
+            const r = { ls, open, off };
+            rows.push(r);
+
+            open.addEventListener("click", e => {
+              if (!navigator.onLine && open.dataset.saved !== "1") {
+                e.preventDefault();
+                alert("Ce fichier n'est pas enregistré hors ligne. Connecte-toi à internet pour l'ouvrir, ou enregistre-le avant avec le bouton « Hors ligne ».");
+              }
+            });
+            off.addEventListener("click", async () => {
+              if (off.dataset.saved === "1") { await removePdf(ls.file); return setSaved(r, false); }
+              off.textContent = "…";
+              try { await savePdf(ls.file); setSaved(r, true); }
+              catch (e) { setSaved(r, false); alert("Impossible d'enregistrer ce fichier. Vérifie ta connexion et réessaie."); }
+            });
+
+            ul.append(el("li", { class: "row" }, title, el("span", { class: "actions" }, open, off, dl)));
           });
           content.append(ul);
         });
+
+        // Bouton "tout enregistrer"
+        const all = el("button", { class: "btn primary", type: "button" }, "Tout enregistrer hors ligne");
+        const hint = el("span", { class: "hint" }, "Pour lire sans internet");
+        document.getElementById("bar").append(el("div", { class: "offline-bar" }, all, hint));
+        all.addEventListener("click", async () => {
+          const todo = rows.filter(r => r.off.dataset.saved !== "1");
+          if (!todo.length) { hint.textContent = "Tout est déjà enregistré"; return; }
+          all.disabled = true;
+          let done = 0, failed = 0;
+          for (const r of todo) {
+            hint.textContent = "Enregistrement " + (done + failed + 1) + "/" + todo.length + "...";
+            try { await savePdf(r.ls.file); setSaved(r, true); done++; } catch (e) { failed++; }
+          }
+          all.disabled = false;
+          hint.textContent = failed ? done + " enregistré(s), " + failed + " échec(s). Réessaie avec internet." : "✓ Tout est enregistré";
+        });
+
+        // État initial : quels fichiers sont déjà enregistrés
+        for (const r of rows) setSaved(r, await isSaved(r.ls.file));
       } catch (e) { showError("Erreur de chargement. Vérifie ta connexion et réessaie."); }
     })();
   </script>
