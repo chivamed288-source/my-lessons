@@ -124,8 +124,58 @@
           "id": "S3",
           "subjects": [
             {
-              "id": "stat",
-              "name": "Statistiques",
+              "id": "francais3",
+              "name": "Français 3",
+              "lessons": []
+            },
+            {
+              "id": "anglais3",
+              "name": "Anglais 3",
+              "lessons": []
+            },
+            {
+              "id": "economie-entreprise",
+              "name": "Économie de l'entreprise",
+              "lessons": []
+            },
+            {
+              "id": "management",
+              "name": "Management",
+              "lessons": []
+            },
+            {
+              "id": "analyse-numerique",
+              "name": "Analyse numérique",
+              "lessons": []
+            },
+            {
+              "id": "optimisation",
+              "name": "Optimisation",
+              "lessons": []
+            },
+            {
+              "id": "ia",
+              "name": "Intelligence artificielle",
+              "lessons": []
+            },
+            {
+              "id": "automatisation",
+              "name": "Automatisation et régulation industrielle",
+              "lessons": []
+            },
+            {
+              "id": "meca-fluides-thermo",
+              "name": "Mécanique des fluides et thermodynamique",
+              "lessons": []
+            },
+            {
+              "id": "gestion-production",
+              "name": "Gestion de production",
+              "lessons": []
+            },
+            {
+              "id": "lean-six-sigma",
+              "name": "Méthode Lean et Six Sigma",
               "lessons": []
             }
           ]
@@ -134,8 +184,48 @@
           "id": "S4",
           "subjects": [
             {
-              "id": "matiere-s4-1",
-              "name": "Matière S4 - 1",
+              "id": "francais4",
+              "name": "Français 4",
+              "lessons": []
+            },
+            {
+              "id": "anglais4",
+              "name": "Anglais 4",
+              "lessons": []
+            },
+            {
+              "id": "comptabilite",
+              "name": "Comptabilité",
+              "lessons": []
+            },
+            {
+              "id": "analyse-couts",
+              "name": "Analyse des coûts et rentabilité des procédés",
+              "lessons": []
+            },
+            {
+              "id": "recherche-operationnelle",
+              "name": "Recherche opérationnelle",
+              "lessons": []
+            },
+            {
+              "id": "supervision",
+              "name": "Supervision des processus ",
+              "lessons": []
+            },
+            {
+              "id": "marketing",
+              "name": "Marketing stratégique et opérationnel",
+              "lessons": []
+            },
+            {
+              "id": "sdf-rams",
+              "name": "Sûreté de fonctionnement ",
+              "lessons": []
+            },
+            {
+              "id": "machines-thermiques",
+              "name": "Machines thermiques, hydrauliques et électroniques",
               "lessons": []
             }
           ]
@@ -166,7 +256,7 @@
             },
             {
               "id": "grh",
-              "name": "Management des Ressources Humaines (GRH) et droit",
+              "name": "Management des Ressources Humaines (GRH)",
               "lessons": []
             },
             {
