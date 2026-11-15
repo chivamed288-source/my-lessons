@@ -1,10 +1,10 @@
 // Change ce numéro à chaque mise à jour du site pour forcer le rafraîchissement
-const VERSION = "v14";
+const VERSION = "v15";
 const SHELL = `ml-shell-${VERSION}`;
 const PDFS = "ml-pdfs";
 const FILES = [
   "./", "index.html", "niveau.html", "matiere.html",
-  "css/style.css", "js/app.js", "js/theme.js", "js/config.js", "js/install.js", "admin.html", "manifest.json",
+  "css/style.css", "js/app.js", "js/theme.js", "js/config.js", "js/install.js", "lecteur.html", "js/pdfjs/pdf.min.js", "js/pdfjs/pdf.worker.min.js", "admin.html", "manifest.json",
   "icons/icon-192.png", "icons/icon-512.png"
 ];
 

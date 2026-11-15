@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#16233b">
+  <link rel="manifest" href="manifest.json">
+  <title>Lecteur - My Lessons</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+  <style>
+    body { background: var(--paper); }
+    .theme-btn { display: none; }
+    .rbar {
+      position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 8px;
+      padding: calc(env(safe-area-inset-top, 0px) + 8px) 10px 8px;
+      background: var(--card); border-bottom: 1px solid var(--line);
+    }
+    .rbtn {
+      flex: none; width: 42px; height: 42px; font: inherit; font-size: 1.25rem; font-weight: 700; cursor: pointer;
+      background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 12px;
+    }
+    .rbtn:hover { border-color: var(--primary); }
+    .rtitle { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rinfo { flex: none; color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+    .rstatus { padding: 28px 16px; text-align: center; color: var(--muted); font-weight: 600; }
+    .rstatus:empty { display: none; }
+    .rstatus.bad { color: var(--bad); }
+    .rstatus .btn { margin: 10px 4px 0; }
+    #pages { overflow-x: auto; padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 24px); }
+    .pg { position: relative; margin: 0 auto 12px; background: #fff; box-shadow: var(--shadow); border-radius: 4px; overflow: hidden; }
+    .pg canvas { display: block; }
+  </style>
+</head>
+<body>
+  <header class="rbar">
+    <button id="back" class="rbtn" type="button" aria-label="Retour">&larr;</button>
+    <div id="rtitle" class="rtitle">Chargement...</div>
+    <span id="pageinfo" class="rinfo"></span>
+    <button id="zout" class="rbtn" type="button" aria-label="Zoom arrière">&minus;</button>
+    <button id="zin" class="rbtn" type="button" aria-label="Zoom avant">+</button>
+  </header>
+  <div id="status" class="rstatus" role="status"></div>
+  <div id="pages"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+  <script type="module">
+    import * as pdfjsLib from "./js/pdfjs/pdf.min.js";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("js/pdfjs/pdf.worker.min.js", location.href).href;
+
+    const file = params.get("f");
+    const title = params.get("t") || "Cours";
+    const holder = document.getElementById("pages");
+    const statusEl = document.getElementById("status");
+    const info = document.getElementById("pageinfo");
+    let pdf, base, pages = [], zoom = 1, gen = 0, current = 1;
+
+    document.getElementById("rtitle").textContent = title;
+    document.title = title + " - My Lessons";
+    document.getElementById("back").addEventListener("click", () => {
+      if (history.length > 1) history.back(); else location.href = "index.html";
+    });
+
+    function setStatus(text, bad, withRetry) {
+      statusEl.replaceChildren(text || "");
+      statusEl.className = "rstatus" + (bad ? " bad" : "");
+      if (withRetry) {
+        const retry = el("button", { class: "btn primary", type: "button" }, "Réessayer");
+        retry.addEventListener("click", () => location.reload());
+        statusEl.append(el("br"), retry);
+      }
+    }
+
+    // Récupère le PDF : d'abord la copie enregistrée sur le téléphone, sinon internet (et on la garde)
+    async function getPdfData(f, onProgress) {
+      const url = absUrl(f);
+      let cache = null;
+      try { cache = await caches.open(PDF_CACHE); } catch (e) {}
+      if (cache) {
+        const hit = await cache.match(url);
+        if (hit) return new Uint8Array(await hit.arrayBuffer());
+      }
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      if (cache) { try { cache.put(url, res.clone()); } catch (e) {} }
+      const total = Number(res.headers.get("Content-Length")) || 0;
+      if (!res.body || !total) return new Uint8Array(await res.arrayBuffer());
+      const reader = res.body.getReader();
+      const chunks = []; let got = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value); got += value.length;
+        onProgress(got / total);
+      }
+      const out = new Uint8Array(got); let o = 0;
+      chunks.forEach(c => { out.set(c, o); o += c.length; });
+      return out;
+    }
+
+    const fitWidth = () => Math.max(holder.clientWidth - 24, 200);
+    const scaleFor = w => (fitWidth() / w) * zoom;
+
+    function clearPage(p) {
+      if (p.task) { try { p.task.cancel(); } catch (e) {} p.task = null; }
+      p.canvas.width = 0; p.canvas.height = 0; p.rendered = false;
+    }
+
+    async function render(p) {
+      if (p.rendered || p.rendering) return;
+      p.rendering = true;
+      const g = gen;
+      try {
+        const page = await pdf.getPage(p.n);
+        if (g !== gen) throw new Error("stale");
+        const w = page.getViewport({ scale: 1 });
+        const s = scaleFor(w.width);
+        const cssW = w.width * s, cssH = w.height * s;
+        let out = Math.min(window.devicePixelRatio || 1, 2);
+        const maxPx = 12e6;                              // limite mémoire par page
+        if (cssW * cssH * out * out > maxPx) out = Math.max(1, Math.sqrt(maxPx / (cssW * cssH)));
+        const vp = page.getViewport({ scale: s * out });
+        const c = p.canvas;
+        c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+        c.style.width = Math.floor(cssW) + "px"; c.style.height = Math.floor(cssH) + "px";
+        p.div.style.width = c.style.width; p.div.style.height = c.style.height;
+        p.task = page.render({ canvasContext: c.getContext("2d"), canvas: c, viewport: vp });
+        await p.task.promise;
+        p.task = null;
+        p.rendered = (g === gen);
+        if (!p.rendered) clearPage(p);
+      } catch (e) { /* annulé ou page illisible */ }
+      p.rendering = false;
+      if (g !== gen && p.visible) render(p);
+    }
+
+    // Dessine seulement les pages proches de l'écran (économise la mémoire)
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        const p = pages[Number(en.target.dataset.n) - 1];
+        p.visible = en.isIntersecting;
+        if (p.visible) render(p); else if (p.rendered) clearPage(p);
+      });
+    }, { rootMargin: "1200px 0px" });
+
+    // Page en cours (bande fine au milieu de l'écran)
+    const mid = new IntersectionObserver(entries => {
+      entries.forEach(en => {
+        if (en.isIntersecting) {
+          current = Number(en.target.dataset.n);
+          info.textContent = current + " / " + pdf.numPages;
+        }
+      });
+    }, { rootMargin: "-48% 0px -48% 0px" });
+
+    function layout() {
+      gen++;
+      const s = scaleFor(base.width);
+      pages.forEach(p => {
+        clearPage(p);
+        p.div.style.width = Math.floor(base.width * s) + "px";
+        p.div.style.height = Math.floor(base.height * s) + "px";
+        io.unobserve(p.div); io.observe(p.div);
+      });
+    }
+
+    function setZoom(z) {
+      z = Math.min(3, Math.max(0.5, Math.round(z * 4) / 4));
+      if (z === zoom) return;
+      zoom = z;
+      layout();
+      const target = pages[current - 1];
+      if (target) window.scrollTo(0, target.div.offsetTop - 60);
+    }
+    document.getElementById("zin").addEventListener("click", () => setZoom(zoom + 0.25));
+    document.getElementById("zout").addEventListener("click", () => setZoom(zoom - 0.25));
+
+    let rt;
+    window.addEventListener("resize", () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => { if (pdf) layout(); }, 250);
+    });
+
+    (async () => {
+      if (!file) return setStatus("Fichier introuvable.", true);
+      let t;
+      try { t = new URL(absUrl(file)); } catch (e) { return setStatus("Fichier introuvable.", true); }
+      const okLocal = t.origin === location.origin && /\.pdf$/i.test(t.pathname);
+      const okRemote = t.hostname.endsWith(".supabase.co") && t.pathname.includes("/storage/v1/object/public/pdfs/");
+      if (!okLocal && !okRemote) return setStatus("Fichier non autorisé.", true);
+
+      try {
+        setStatus("Chargement...");
+        const data = await getPdfData(file, p => setStatus("Chargement... " + Math.round(p * 100) + "%"));
+        setStatus("Préparation...");
+        pdf = await pdfjsLib.getDocument({ data }).promise;
+        const first = await pdf.getPage(1);
+        base = first.getViewport({ scale: 1 });
+        for (let n = 1; n <= pdf.numPages; n++) {
+          const div = el("div", { class: "pg" });
+          div.dataset.n = n;
+          const canvas = el("canvas");
+          div.append(canvas);
+          holder.append(div);
+          pages.push({ n, div, canvas, rendered: false, rendering: false, visible: false, task: null });
+        }
+        setStatus("");
+        info.textContent = "1 / " + pdf.numPages;
+        layout();
+        pages.forEach(p => mid.observe(p.div));
+      } catch (e) {
+        const offline = !navigator.onLine;
+        setStatus(offline
+          ? "Ce fichier n'est pas enregistré hors ligne. Connecte-toi à internet pour l'ouvrir."
+          : "Impossible d'ouvrir ce fichier. Vérifie ta connexion et réessaie.", true, true);
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -68,6 +68,10 @@ function pdfHref(file, title) {
   if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return file;
   return "open-pdf?u=" + encodeURIComponent(absUrl(file)) + (title ? "&n=" + encodeURIComponent(title) : "");
 }
+// Lecteur PDF intégré au site (s'ouvre dans la même fenêtre, même hors ligne)
+function readerHref(file, title) {
+  return "lecteur.html?f=" + encodeURIComponent(file) + "&t=" + encodeURIComponent(title || "Cours");
+}
 async function isSaved(file) {
   try { return !!(await (await caches.open(PDF_CACHE)).match(absUrl(file))); }
   catch (e) { return false; }
