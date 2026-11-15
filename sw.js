@@ -1,5 +1,5 @@
 // Change ce numéro à chaque mise à jour du site pour forcer le rafraîchissement
-const VERSION = "v12";
+const VERSION = "v13";
 const SHELL = `ml-shell-${VERSION}`;
 const PDFS = "ml-pdfs";
 const FILES = [
@@ -45,14 +45,22 @@ self.addEventListener("fetch", e => {
     const okLocal = t.origin === location.origin && t.pathname.endsWith(".pdf");
     const okRemote = t.hostname.endsWith(".supabase.co") && t.pathname.includes("/storage/v1/object/public/pdfs/");
     if (!okLocal && !okRemote) return;
+    const name = ((url.searchParams.get("n") || "cours").replace(/[\\/:*?"<>|]+/g, " ").trim() || "cours");
+    const named = res => {
+      const h = new Headers(res.headers);
+      h.set("Content-Type", "application/pdf");
+      h.set("Content-Disposition", "inline; filename*=UTF-8''" + encodeURIComponent(name) + ".pdf");
+      return new Response(res.body, { status: 200, headers: h });
+    };
     e.respondWith(
       caches.open(PDFS).then(async cache => {
         const hit = await cache.match(t.href);
-        if (hit) return hit;
+        if (hit) return named(hit);
         try {
           const res = await fetch(t.href, { mode: "cors" });
-          if (res.ok) cache.put(t.href, res.clone());
-          return res;
+          if (!res.ok) return res;
+          cache.put(t.href, res.clone());
+          return named(res);
         } catch (err) {
           return Response.redirect(t.href, 302);
         }

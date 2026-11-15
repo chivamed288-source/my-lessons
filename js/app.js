@@ -64,9 +64,9 @@ const PDF_CACHE = "ml-pdfs";
 const absUrl = file => new URL(file, location.href).href;
 
 // Les PDF passent par le service worker (open-pdf) pour pouvoir s'ouvrir sans internet
-function pdfHref(file) {
+function pdfHref(file, title) {
   if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return file;
-  return "open-pdf?u=" + encodeURIComponent(absUrl(file));
+  return "open-pdf?u=" + encodeURIComponent(absUrl(file)) + (title ? "&n=" + encodeURIComponent(title) : "");
 }
 async function isSaved(file) {
   try { return !!(await (await caches.open(PDF_CACHE)).match(absUrl(file))); }

@@ -153,6 +153,7 @@
         if (!f) return setMsg("Choisis un fichier PDF.", true);
         if (!/\.pdf$/i.test(f.name)) return setMsg("Le fichier doit être un PDF.", true);
         if (f.size > 50 * 1024 * 1024) return setMsg("Fichier trop gros (50 Mo maximum).", true);
+        if (f.size > 15 * 1024 * 1024 && !confirm("Ce fichier fait " + Math.round(f.size / 1048576) + " Mo : il sera lent à ouvrir sur téléphone. Le compresser avant (ilovepdf.com) est conseillé. L'envoyer quand même ?")) return;
 
         const base = f.name.replace(/\.pdf$/i, "");
         const title = $("title").value.trim() || base;
