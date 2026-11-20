@@ -45,7 +45,8 @@ const TYPES = [
   ["cours", "Cours"],
   ["td", "TD"],
   ["tp", "TP"],
-  ["examen", "Examens"]
+  ["examen", "Examens"],
+  ["archive", "Archive"]
 ];
 
 // Un fichier est "Nouveau" pendant ce nombre de jours (change ce chiffre si besoin)

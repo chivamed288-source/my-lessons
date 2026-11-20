@@ -30,6 +30,11 @@
     #pages { overflow-x: auto; padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 24px); }
     .pg { position: relative; margin: 0 auto 12px; background: #fff; box-shadow: var(--shadow); border-radius: 4px; overflow: hidden; }
     .pg canvas { display: block; }
+    #pages { touch-action: pan-x pan-y; }
+    .zoom { display: flex; gap: 8px; }
+    @media (hover: none) and (pointer: coarse) { .zoom { display: none; } }
+    .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%);
+      z-index: 40; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--paper); font-weight: 600; font-size: .9rem; }
   </style>
 </head>
 <body>
@@ -37,11 +42,16 @@
     <button id="back" class="rbtn" type="button" aria-label="Retour">&larr;</button>
     <div id="rtitle" class="rtitle">Chargement...</div>
     <span id="pageinfo" class="rinfo"></span>
-    <button id="zout" class="rbtn" type="button" aria-label="Zoom arrière">&minus;</button>
-    <button id="zin" class="rbtn" type="button" aria-label="Zoom avant">+</button>
+    <span class="zoom">
+      <button id="zout" class="rbtn" type="button" aria-label="Zoom arrière">&minus;</button>
+      <button id="zin" class="rbtn" type="button" aria-label="Zoom avant">+</button>
+    </span>
+    <button id="share" class="rbtn" type="button" aria-label="Partager">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+    </button>
   </header>
   <div id="status" class="rstatus" role="status"></div>
-  <div id="pages"></div>
+  <div id="pages"><div id="zoomer"></div></div>
 
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
@@ -52,6 +62,7 @@
     const file = params.get("f");
     const title = params.get("t") || "Cours";
     const holder = document.getElementById("pages");
+    const zoomer = document.getElementById("zoomer");
     const statusEl = document.getElementById("status");
     const info = document.getElementById("pageinfo");
     let pdf, base, pages = [], zoom = 1, gen = 0, current = 1;
@@ -117,8 +128,9 @@
         const w = page.getViewport({ scale: 1 });
         const s = scaleFor(w.width);
         const cssW = w.width * s, cssH = w.height * s;
-        let out = Math.min(window.devicePixelRatio || 1, 2);
-        const maxPx = 12e6;                              // limite mémoire par page
+        // Au moins 2x, jusqu'à 3x la densité de l'écran : texte net même en zoomant
+        let out = Math.min(3, Math.max(2, window.devicePixelRatio || 1));
+        const maxPx = 10e6;                              // limite mémoire par page
         if (cssW * cssH * out * out > maxPx) out = Math.max(1, Math.sqrt(maxPx / (cssW * cssH)));
         const vp = page.getViewport({ scale: s * out });
         const c = p.canvas;
@@ -142,7 +154,7 @@
         p.visible = en.isIntersecting;
         if (p.visible) render(p); else if (p.rendered) clearPage(p);
       });
-    }, { rootMargin: "1200px 0px" });
+    }, { rootMargin: "1000px 0px" });
 
     // Page en cours (bande fine au milieu de l'écran)
     const mid = new IntersectionObserver(entries => {
@@ -165,16 +177,84 @@
       });
     }
 
-    function setZoom(z) {
-      z = Math.min(3, Math.max(0.5, Math.round(z * 4) / 4));
-      if (z === zoom) return;
-      zoom = z;
-      layout();
-      const target = pages[current - 1];
-      if (target) window.scrollTo(0, target.div.offsetTop - 60);
+    // Zoom autour d'un point de l'écran (pour que le texte regardé reste sous les doigts)
+    function zoomAt(nz, cx, cy) {
+      nz = Math.min(4, Math.max(0.5, nz));
+      const k = nz / zoom;
+      if (Math.abs(k - 1) < 0.01) return;
+      const hr = holder.getBoundingClientRect();
+      const relX = holder.scrollLeft + (cx - hr.left);
+      const relY = window.scrollY + cy - holder.offsetTop;
+      zoom = nz;
+      layout();                                     // redessine net à la nouvelle taille
+      holder.scrollLeft = relX * k - (cx - hr.left);
+      window.scrollTo(0, holder.offsetTop + relY * k - cy);
     }
-    document.getElementById("zin").addEventListener("click", () => setZoom(zoom + 0.25));
-    document.getElementById("zout").addEventListener("click", () => setZoom(zoom - 0.25));
+    document.getElementById("zin").addEventListener("click", () => zoomAt(zoom * 1.25, innerWidth / 2, innerHeight / 2));
+    document.getElementById("zout").addEventListener("click", () => zoomAt(zoom / 1.25, innerWidth / 2, innerHeight / 2));
+
+    // Pincement à deux doigts : aperçu fluide, puis redessin net
+    let pinch = null;
+    const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    holder.addEventListener("touchstart", e => {
+      if (e.touches.length === 2) {
+        const r = zoomer.getBoundingClientRect();
+        const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        pinch = { d0: dist(e.touches), ratio: 1, cx, cy };
+        zoomer.style.transformOrigin = (cx - r.left) + "px " + (cy - r.top) + "px";
+      }
+    }, { passive: true });
+    holder.addEventListener("touchmove", e => {
+      if (pinch && e.touches.length === 2) {
+        e.preventDefault();
+        pinch.ratio = Math.min(4 / zoom, Math.max(0.5 / zoom, dist(e.touches) / pinch.d0));
+        zoomer.style.transform = "scale(" + pinch.ratio + ")";
+      }
+    }, { passive: false });
+    const endPinch = e => {
+      if (pinch && e.touches.length < 2) {
+        const p = pinch; pinch = null;
+        zoomer.style.transform = "";
+        zoomAt(zoom * p.ratio, p.cx, p.cy);
+      }
+    };
+    holder.addEventListener("touchend", endPinch);
+    holder.addEventListener("touchcancel", endPinch);
+
+    // Partage : on envoie le vrai fichier PDF (qualité d'origine), sinon le lien
+    let shareFile = null;
+    function toast(text) {
+      const t = el("div", { class: "toast", role: "status" }, text);
+      document.body.append(t);
+      setTimeout(() => t.remove(), 2200);
+    }
+    async function prepareShare() {
+      try {
+        const cache = await caches.open(PDF_CACHE);
+        const hit = await cache.match(absUrl(file));
+        if (!hit) return;
+        const name = (title.replace(/[\\/:*?"<>|]+/g, " ").trim() || "cours") + ".pdf";
+        shareFile = new File([await hit.blob()], name, { type: "application/pdf" });
+      } catch (e) {}
+    }
+    async function copyLink() {
+      try { await navigator.clipboard.writeText(location.href); toast("Lien copié"); }
+      catch (e) { toast("Partage impossible sur cet appareil"); }
+    }
+    document.getElementById("share").addEventListener("click", async () => {
+      try {
+        if (shareFile && navigator.canShare && navigator.canShare({ files: [shareFile] })) {
+          await navigator.share({ files: [shareFile], title });
+        } else if (navigator.share) {
+          await navigator.share({ title, text: title, url: location.href });
+        } else {
+          await copyLink();
+        }
+      } catch (e) {
+        if (!e || e.name !== "AbortError") await copyLink();
+      }
+    });
 
     let rt;
     window.addEventListener("resize", () => {
@@ -202,13 +282,14 @@
           div.dataset.n = n;
           const canvas = el("canvas");
           div.append(canvas);
-          holder.append(div);
+          zoomer.append(div);
           pages.push({ n, div, canvas, rendered: false, rendering: false, visible: false, task: null });
         }
         setStatus("");
         info.textContent = "1 / " + pdf.numPages;
         layout();
         pages.forEach(p => mid.observe(p.div));
+        setTimeout(prepareShare, 600);
       } catch (e) {
         const offline = !navigator.onLine;
         setStatus(offline
